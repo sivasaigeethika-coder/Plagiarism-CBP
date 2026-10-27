@@ -4,6 +4,7 @@ import com.plagiarism.model.SimilarityResult;
 import com.plagiarism.service.SimilarityService;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,12 +26,28 @@ public class SimilarityController {
     public ResponseEntity<SimilarityResult>
     compareSubmissions(
             @RequestParam String submission1Id,
-            @RequestParam String submission2Id) {
+            @RequestParam String submission2Id,
+            Authentication authentication) {
 
         return ResponseEntity.ok(
                 similarityService.compareSubmissions(
                         submission1Id,
-                        submission2Id
+                        submission2Id,
+                        authentication.getName()
+                )
+        );
+    }
+
+    @PostMapping("/assignment/{assignmentId}/scan")
+    public ResponseEntity<List<SimilarityResult>>
+    scanAssignment(
+            @PathVariable String assignmentId,
+            Authentication authentication) {
+
+        return ResponseEntity.ok(
+                similarityService.scanAssignment(
+                        assignmentId,
+                        authentication.getName()
                 )
         );
     }
@@ -38,11 +55,15 @@ public class SimilarityController {
     @GetMapping("/assignment/{assignmentId}")
     public ResponseEntity<List<SimilarityResult>>
     getAssignmentResults(
-            @PathVariable String assignmentId) {
+            @PathVariable String assignmentId,
+            Authentication authentication) {
 
         return ResponseEntity.ok(
                 similarityService
-                        .getAssignmentResults(assignmentId)
+                        .getAssignmentResults(
+                                assignmentId,
+                                authentication.getName()
+                        )
         );
     }
 }

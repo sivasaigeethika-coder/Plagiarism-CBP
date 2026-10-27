@@ -9,7 +9,7 @@ CopyCatch is a React/Vite frontend connected to the supplied Spring Boot and Mon
 - **Framework / language:** Spring Boot 4.1.1, Java 21, Spring Web MVC, Spring Security, Spring Data MongoDB, JWT (`jjwt` 0.12.6), Maven.
 - **Backend structure:** `controller/` REST routes; `dto/` request/response objects; `model/` Mongo documents; `repository/` Mongo repositories; `security/` JWT filter/configuration; `service/` business logic; `similarity/` token/Jaccard/cosine/structural scoring; `exception/` handlers.
 - **Data:** Mongo collections include users, assignments, submissions, similarity results, reports, and audit logs. User passwords are BCrypt hashes. Submission code is stored as source text.
-- **Checking method:** JSON source-code submission, not multipart upload; comparison is synchronous and compares two saved submission IDs. There is no asynchronous job or per-submission report. File selection in this frontend reads supported text/source files in the browser and sends their text in JSON (1 MB client limit).
+- **Checking method:** JSON source-code submission, not multipart upload; teachers can synchronously compare all pairs of submissions from different students within an assignment. Results are saved per submission pair. File selection in this frontend reads supported text/source files in the browser and sends their text in JSON (1 MB client limit).
 - **JWT:** Login returns a one-hour token and profile fields. Frontend keeps the token in `localStorage`; this follows the API's bearer-token model but is accessible to scripts running in the page. For higher security, move to an HttpOnly cookie session.
 
 ### API endpoints from the supplied backend
@@ -31,8 +31,9 @@ CopyCatch is a React/Vite frontend connected to the supplied Spring Boot and Mon
 | `GET /api/submissions` | — | All submissions | Teacher |
 | `GET /api/submissions/assignment/{assignmentId}` | — | Submission array | Teacher |
 | `GET /api/submissions/student/{studentId}` | — | Submission array | Student |
-| `POST /api/similarity/compare?submission1Id=…&submission2Id=…` | Query parameters | Saved `SimilarityResult` with component scores and risk | Teacher |
-| `GET /api/similarity/assignment/{assignmentId}` | — | Similarity result array | Teacher |
+| `POST /api/similarity/assignment/{assignmentId}/scan` | — | Saved pairwise `SimilarityResult` array for different students in that assignment | Owning teacher |
+| `POST /api/similarity/compare?submission1Id=…&submission2Id=…` | Query parameters | Saved `SimilarityResult` with component scores and risk; submissions must be from different students in the same assignment | Owning teacher |
+| `GET /api/similarity/assignment/{assignmentId}` | — | Similarity result array | Owning teacher |
 | `POST /api/reports/{assignmentId}` | — | Saved aggregate `Report` | Teacher |
 | `GET /api/reports/{assignmentId}` | — | Aggregate `Report` | Teacher |
 | `GET /api/dashboard/stats` | — | `DashboardStats` totals and average | Teacher |
@@ -40,7 +41,7 @@ CopyCatch is a React/Vite frontend connected to the supplied Spring Boot and Mon
 | `GET /api/audit/user/{userId}` | — | Audit log array | Teacher |
 | `GET /api/audit/assignment/{assignmentId}` | — | Audit log array | Teacher |
 
-The controller does not implement `/api/assignments/available`, although the security config mentions it; the sample `backend/test.http` also calls an unimplemented `POST /api/test/user`. There is no delete submission, history-by-current-user convenience route, single-document plagiarism scan, PDF export, matched passage/source data, or results endpoint that returns source text. The UI therefore limits reports to pairwise metric breakdowns and does not claim to show highlighted passages. Students submit work; teacher accounts compare the latest two submissions for an assignment.
+The controller does not implement `/api/assignments/available`, although the security config mentions it; the sample `backend/test.http` also calls an unimplemented `POST /api/test/user`. There is no delete submission, history-by-current-user convenience route, single-document plagiarism scan, PDF export, matched passage/source data, or results endpoint that returns source text. The UI therefore limits reports to pairwise metric breakdowns and does not claim to show highlighted passages. Students submit work; the assignment owner can compare all saved submission pairs across different students.
 
 ### Frontend design spec
 
